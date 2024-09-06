@@ -13,7 +13,7 @@ class ReferenceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        primary: color, // Button color
+        backgroundColor: color, // Use backgroundColor instead of primary
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       ),
       onPressed: onPressed,

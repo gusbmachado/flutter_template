@@ -1,3 +1,5 @@
+import 'dart:math';
+
 bool hasValue(dynamic data) {
   return data != null && data is! num && data.toString().isNotEmpty;
 }
@@ -5,8 +7,8 @@ bool hasValue(dynamic data) {
 void noop() {}
 
 double round(double number, [int places = 0]) {
-  double factor = Math.pow(10, places);
-  return (number * factor + double.minPositive).round() / factor;
+  double factor = pow(10, places).toDouble();
+  return (number * factor).round() / factor;
 }
 
 String normalizeText(String text) {
