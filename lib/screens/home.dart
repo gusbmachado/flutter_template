@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Text(
               'Hello, world!',
-              style: Theme.of(context).textTheme.bodyText1,
+              style: Theme.of(context).textTheme.bodyLarge,
             ),
             SizedBox(height: 20),
             ReferenceButton(
