@@ -1,3 +1,15 @@
+buildscript {
+    ext.kotlin_version = '1.9.0' // Make sure this is updated
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.3.0' // Make sure this is updated (or higher, e.g., 8.4.0)
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -6,11 +18,59 @@ allprojects {
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
+    // Ensure the build directory is set (if you need this custom setting)
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(':app')
+
+    // Ensure evaluation depends on app (if absolutely necessary, otherwise remove)
+    // Be cautious with evaluationDependsOn as it can cause evaluation order issues.
+    // If you remove it, test carefully.
+    // project.evaluationDependsOn(':app') // Comment out or remove if it causes issues.
+
+    // THE NAMESPACE INJECTION LOGIC
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            // Check if it's an Android library module (most plugins are)
+            if (project.plugins.hasPlugin('com.android.library')) {
+                // Check if the namespace property exists and is null, or if it doesn't exist at all
+                if (!project.android.hasProperty('namespace') || project.android.namespace == null) {
+                    def manifestFile = file("${project.projectDir}/src/main/AndroidManifest.xml")
+                    if (manifestFile.exists()) {
+                        def manifestText = manifestFile.text
+                        def match = (manifestText =~ /package="([^"]+)"/)
+                        if (match.find()) {
+                            def packageName = match.group(1)
+                            // Only set if the current namespace is null or not set.
+                            if (!project.android.hasProperty('namespace') || project.android.namespace == null) {
+                                project.android.namespace = packageName
+                                println "Namespace added for ${project.name}: ${packageName}" // For debugging
+                            }
+                        } else {
+                            // Fallback if AndroidManifest.xml exists but package attribute is not found
+                            if (!project.android.hasProperty('namespace') || project.android.namespace == null) {
+                                project.android.namespace = "com.example.${project.name.replace('-', '_')}"
+                                println "Fallback namespace added for ${project.name}: com.example.${project.name.replace('-', '_')}" // For debugging
+                            }
+                        }
+                    } else {
+                        // Fallback if AndroidManifest.xml does not exist (unlikely for a plugin)
+                        if (!project.android.hasProperty('namespace') || project.android.namespace == null) {
+                            project.android.namespace = "com.example.${project.name.replace('-', '_')}"
+                            println "Generic fallback namespace added for ${project.name}: com.example.${project.name.replace('-', '_')}" // For debugging
+                        }
+                    }
+                }
+            }
+            // Also handle com.android.application if needed, though less common for plugins
+            else if (project.plugins.hasPlugin('com.android.application')) {
+                 if (!project.android.hasProperty('namespace') || project.android.namespace == null) {
+                     project.android.namespace = "com.example.${project.name.replace('-', '_')}"
+                     println "App module fallback namespace added for ${project.name}: com.example.${project.name.replace('-', '_')}" // For debugging
+                 }
+            }
+        }
+    }
 }
 
 tasks.register("clean", Delete) {
